@@ -59,9 +59,7 @@ def main():
     classifier = MultiLabelClassifier(
         idx_to_label=idx_to_roles,
         role_to_idx=role_to_idx,
-        model_name="bert-base-uncased",
-        dropout_rate=0.3
-    )
+    ).to(device)
 
     # Optimizer and scheduler
     optimizer = torch.optim.AdamW(classifier.model.parameters(), lr=config.LEARNING_RATE)
