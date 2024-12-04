@@ -17,10 +17,10 @@ class EntityDataset(Dataset):
         mention = self.mentions[idx]
         context = self.contexts[idx]
         label = self.labels[idx]
-
+        combined_text = f"{mention} [SEP] {context}"
 
         inputs = self.tokenizer(
-            context,
+            combined_text,
             truncation=True, max_length=self.max_len, 
             padding="max_length", return_tensors="pt"
         )

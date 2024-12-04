@@ -16,8 +16,7 @@ def extract_context_within_512(article, start, end, tokenizer, max_len=512):
         entity = article[start:end]
         after = article[end:]
         marked_article = before + "[ENTITY] " + entity + " [/ENTITY]" + after
-        # 9 for len("[ENTITY] ")
-        adjusted_start = start + 9
+        adjusted_start = len(before) + len("[ENTITY] ")
         adjusted_end = adjusted_start + len(entity)
         return marked_article, adjusted_start, adjusted_end
     
@@ -27,6 +26,7 @@ def extract_context_within_512(article, start, end, tokenizer, max_len=512):
         marked_article,
         return_offsets_mapping=True,
         truncation=False,
+        padding=False
     )
     
     # Extract offset mapping (character to token mapping)
@@ -35,10 +35,13 @@ def extract_context_within_512(article, start, end, tokenizer, max_len=512):
     # Locate tokens corresponding to the entity (adjusted start and end)
     entity_token_indices = [
         idx for idx, (char_start, char_end) in enumerate(offsets)
-        if char_start >= adjusted_start and char_end <= adjusted_end
+        if char_start >= adjusted_start -1 and char_end <= adjusted_end
     ]
     
     if not entity_token_indices:
+        print(f"Marked Article: {marked_article}")
+        print(f"Offsets: {offsets}")
+        print(f"Adjusted Start: {adjusted_start}, Adjusted End: {adjusted_end}")
         raise ValueError(f"Entity span does not match any token in the article: {marked_article}")
     
     # Get the first and last token indices of the entity (including markers)
@@ -65,7 +68,6 @@ def extract_context_within_512(article, start, end, tokenizer, max_len=512):
     
     return context
 
-# Add a context column to the DataFrame
 def compute_context(row, articles, tokenizer):
     file_id = row['file_id']
     article = articles[file_id]
@@ -80,9 +82,7 @@ def compute_context(row, articles, tokenizer):
     )
 
 
-# Clean and split roles into proper lists
 def clean_roles(roles):
-    # Remove unwanted characters like '[' and ']' and extra quotes
     if isinstance(roles, str):
         roles = re.sub(r"[\[\]']", '', roles)  # Remove brackets and single quotes
         roles = [role.strip() for role in roles.split(',')]  # Split and strip whitespace
@@ -90,7 +90,6 @@ def clean_roles(roles):
 
 
 
-# Convert fine-grained roles to multi-hot encoding
 def encode_roles(roles, role_to_idx):
     labels = [0] * len(role_to_idx)
     for role in roles:
